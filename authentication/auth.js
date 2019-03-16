@@ -75,13 +75,6 @@ function checkUserIsAdmin(req, res, next) {
   return res.status(403).json({ error: 'Forbidden' });
 }
 
-function requireAdmin() {
-  return [
-    requireAuth,
-    checkUserIsAdmin,
-  ];
-}
-
 async function registerRoute(req, res) {
   const { username, password, email } = req.body;
 
@@ -153,4 +146,4 @@ app.post('/users/login', catchErrors(loginRoute));
 
 module.exports = app;
 module.exports.requireAuth = requireAuth;
-module.exports.requireAdmin = requireAdmin;
+module.exports.checkUserIsAdmin = checkUserIsAdmin;

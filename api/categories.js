@@ -1,14 +1,18 @@
 const xss = require('xss');
 
 const { query, pagedQuery } = require('../utils/db');
-const { isInt, isNotEmptyString } = require('../utils/validation');
+const {
+  isInt,
+  isNotEmptyString,
+  lengthValidationError,
+} = require('../utils/validation');
 const addPageMetadata = require('../utils/addPageMetadata');
 
 async function listCategories(req, res) {
   const { offset = 0, limit = 10 } = req.query;
 
   const categories = await pagedQuery(
-    'SELECT id, title FROM categories ORDER BY id',
+    'SELECT id, title FROM categories ORDER BY updated DESC',
     [],
     { offset, limit },
   );
@@ -52,11 +56,11 @@ async function listCategory(req, res) {
 }
 
 async function validateCategory(title) {
-  if (!isNotEmptyString(title, { max: 256 })) {
-    const length = title && title.length ? title.length : 'undefined';
-    const error = 'Must be non empty string at most 256 characters. ' +
-                    `Current length is ${length}.`;
-    return [{ field: 'title', error }];
+  if (!isNotEmptyString(title, { min: 1, max: 256 })) {
+    return [{
+      field: 'title',
+      error: lengthValidationError(title, 1, 256),
+    }];
   }
 
   const cat = await query(
@@ -66,8 +70,7 @@ async function validateCategory(title) {
 
   if (cat.rows.length > 0) {
     const currentCat = cat.rows[0].id;
-    const error = `Category "${title}" already exists in ` +
-                    `category with id ${currentCat}.`;
+    const error = `Category already exists in category with id ${currentCat}.`;
     return [{ field: 'title', error }];
   }
 
@@ -112,7 +115,7 @@ async function updateCategory(req, res) {
   const q = `
     UPDATE
       categories
-    SET title = $1
+    SET title = $1, updated = current_timestamp
     WHERE id = $2
     RETURNING id, title`;
   const result = await query(q, [xss(title), id]);
@@ -129,7 +132,7 @@ async function deleteCategory(req, res) {
     return res.status(404).json({ error: 'Category not found' });
   }
 
-  const q = 'DELETE FROM categories WHERE ID = $1';
+  const q = 'DELETE FROM categories WHERE id = $1';
   await query(q, [id]);
 
   return res.status(204).json({});

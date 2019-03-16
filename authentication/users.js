@@ -3,10 +3,19 @@ const xss = require('xss');
 
 const badPasswords = require('./bad-passwords');
 
-const { isInt, isEmpty, isNotEmptyString } = require('../utils/validation');
+const {
+  isInt,
+  isEmpty,
+  isNotEmptyString,
+  isString,
+  toPositiveNumberOrDefault,
+  lengthValidationError,
+} = require('../utils/validation');
 const { query, conditionalUpdate } = require('../utils/db');
 
-const BCRYPT_ROUNDS = 11;
+const {
+  BCRYPT_ROUNDS: bcryptRounds = 11,
+} = process.env;
 
 async function findByUsername(username) {
   const q = `
@@ -42,19 +51,20 @@ async function findByEmail(email) {
   return null;
 }
 
-async function validateUser({ username, password, email }, patch = false) {
+async function validateUser(
+  { username, password, email } = {},
+  patching = false,
+  id = null,
+) {
   const validations = [];
 
   // can't patch username
-  if (!patch) {
+  if (!patching) {
     if (!isNotEmptyString(username, { min: 3, max: 32 })) {
-      const length = username && username.length ?
-        username.length : 'undefined';
-
-      const error = 'Must be non empty string at least 3 characters, ' +
-                    'at most 32 characters. ' +
-                    `Current length is ${length}.`;
-      validations.push({ field: 'username', error });
+      validations.push({
+        field: 'username',
+        error: lengthValidationError(username, 3, 32),
+      });
     }
 
     const user = await findByUsername(username);
@@ -67,7 +77,7 @@ async function validateUser({ username, password, email }, patch = false) {
     }
   }
 
-  if (!patch || password || isEmpty(password)) {
+  if (!patching || password || isEmpty(password)) {
     if (badPasswords.indexOf(password) >= 0) {
       validations.push({
         field: 'password',
@@ -76,31 +86,34 @@ async function validateUser({ username, password, email }, patch = false) {
     }
 
     if (!isNotEmptyString(password, { min: 8 })) {
-      const length = password && password.length ?
-        password.length : 'undefined';
-      const error = 'Must be non empty string at least 3 characters, ' +
-                    'at most 32 characters. ' +
-                    `Current length is ${length}.`;
-      validations.push({ field: 'password', error });
+      validations.push({
+        field: 'password',
+        error: lengthValidationError(3, 32),
+      });
     }
   }
 
-  if (!patch || email || isEmpty(email)) {
-    if (!isNotEmptyString(email, { max: 64 })) {
-      const length = email && email.length ?
-        email.length : 'undefined';
-      const error = 'Must be non empty string at most 256 characters. ' +
-                    `Current length is ${length}.`;
-      validations.push({ field: 'email', error });
+  if (!patching || email || isEmpty(email)) {
+    if (!isNotEmptyString(email, { min: 1, max: 64 })) {
+      validations.push({
+        field: 'email',
+        error: lengthValidationError(1, 64),
+      });
     }
 
     const user = await findByEmail(email);
 
     if (user) {
-      validations.push({
-        field: 'email',
-        error: 'Email exists',
-      });
+      const current = user.id;
+
+      if (patching && id && current === toPositiveNumberOrDefault(id, 0)) {
+        // we can patch our own email
+      } else {
+        validations.push({
+          field: 'email',
+          error: 'Email exists',
+        });
+      }
     }
   }
 
@@ -118,19 +131,24 @@ async function findById(id) {
     return null;
   }
 
-  const q = 'SELECT id, email, admin FROM users WHERE id = $1';
+  const user = await query(
+    `SELECT
+      id, username, email, admin, created, updated
+    FROM
+      users
+    WHERE id = $1`,
+    [id],
+  );
 
-  const result = await query(q, [id]);
-
-  if (result.rowCount === 1) {
-    return result.rows[0];
+  if (user.rows.length !== 1) {
+    return null;
   }
 
-  return null;
+  return user.rows[0];
 }
 
 async function createUser(username, email, password, admin = false) {
-  const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+  const hashedPassword = await bcrypt.hash(password, bcryptRounds);
 
   const q = `
     INSERT INTO
@@ -152,23 +170,24 @@ async function updateUser(id, password, email) {
     return null;
   }
 
-  const isset = f => typeof f === 'string' || typeof f === 'number';
-
   const fields = [
-    isset(password) ? 'password' : null,
-    isset(email) ? 'email' : null,
+    isString(password) ? 'password' : null,
+    isString(email) ? 'email' : null,
   ];
 
   let hashedPassword = null;
 
   if (password) {
-    hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    hashedPassword = await bcrypt.hash(password, bcryptRounds);
   }
 
   const values = [
     hashedPassword,
-    isset(email) ? xss(email) : null,
+    isString(email) ? xss(email) : null,
   ];
+
+  fields.push('updated');
+  values.push(new Date());
 
   const result = await conditionalUpdate('users', id, fields, values);
 
@@ -176,7 +195,10 @@ async function updateUser(id, password, email) {
     return null;
   }
 
-  return result.rows[0];
+  const updatedUser = result.rows[0];
+  delete updatedUser.password;
+
+  return updatedUser;
 }
 
 module.exports = {

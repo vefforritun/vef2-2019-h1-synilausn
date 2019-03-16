@@ -6,7 +6,7 @@ const {
   BASE_URL: baseUrl = '',
 } = process.env;
 
-module.exports = function addPageMetadata(
+function addPageMetadata(
   obj,
   path,
   { offset = 0, limit = 10, length = 0 } = {},
@@ -45,4 +45,6 @@ module.exports = function addPageMetadata(
   }
 
   return newObj;
-};
+}
+
+module.exports = addPageMetadata;

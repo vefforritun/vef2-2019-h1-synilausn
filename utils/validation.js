@@ -3,7 +3,26 @@ function isEmpty(s) {
 }
 
 function isInt(i) {
-  return Number.isInteger(Number(i));
+  return i !== '' && Number.isInteger(Number(i));
+}
+
+function isString(s) {
+  return typeof s === 'string';
+}
+
+function isBoolean(b) {
+  return typeof b === 'boolean';
+}
+
+function lengthValidationError(s, min, max) {
+  const length = s && s.length ? s.length : 'undefined';
+
+  const minMsg = min ? `at least ${min} characters` : '';
+  const maxMsg = max ? `at most ${max} characters` : '';
+  const msg = [minMsg, maxMsg].filter(Boolean).join(', ');
+  const lenMsg = `Current length is ${length}.`;
+
+  return `Must be non empty string ${msg}. ${lenMsg}`;
 }
 
 function isNotEmptyString(s, { min = undefined, max = undefined } = {}) {
@@ -31,7 +50,10 @@ function toPositiveNumberOrDefault(value, defaultValue) {
 
 module.exports = {
   isEmpty,
+  isString,
+  isBoolean,
   isInt,
   isNotEmptyString,
   toPositiveNumberOrDefault,
+  lengthValidationError,
 };

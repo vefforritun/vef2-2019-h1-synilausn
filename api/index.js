@@ -1,9 +1,16 @@
 const express = require('express');
 const catchErrors = require('../utils/catchErrors');
-//const { requireAuth, requireAdmin } = require('../authentication/auth');
+const { requireAuth, checkUserIsAdmin } = require('../authentication/auth');
 
+const requireAdmin = [
+  requireAuth,
+  checkUserIsAdmin,
+];
+
+/*
 const requireAdmin = (req, res, next) => next();
 const requireAuth = (req, res, next) => next();
+ */
 
 const {
   listCategories,
@@ -73,8 +80,8 @@ function indexRoute(req, res) {
 router.get('/', indexRoute);
 
 router.get('/users', requireAdmin, catchErrors(listUsers));
-router.get('/user/:id', requireAdmin, catchErrors(listUser));
-router.patch('/user/:id', requireAdmin, catchErrors(updateUser));
+router.get('/users/:id', requireAdmin, catchErrors(listUser));
+router.patch('/users/:id', requireAdmin, catchErrors(updateUser));
 router.get('/user/me', requireAuth, catchErrors(currentUser));
 router.patch('/user/me', requireAuth, catchErrors(updateCurrentUser));
 

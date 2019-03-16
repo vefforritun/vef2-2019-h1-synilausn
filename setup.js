@@ -59,13 +59,13 @@ async function main() {
     return;
   }
 
-  // setja inn gögn
+  // búa til notendur
   try {
-    const createData = await readFileAsync('./sql/insert.sql');
+    const createData = await readFileAsync('./sql/insert-users.sql');
     await query(createData.toString('utf8'));
-    console.info('Gögn sett inn');
+    console.info('Notendur búnir til');
   } catch (e) {
-    console.error('Villa við að setja inn gögn:', e.message);
+    console.error('Villa við að búa til notendur:', e.message);
     return;
   }
 
@@ -89,6 +89,16 @@ async function main() {
     console.info(`Bjó til ${cats} flokka og ${prods} vörur.`);
   } catch (e) {
     console.error('Villa við að búa til gervigögn:', e.message);
+    return;
+  }
+
+  // búa til pantanir og körfu
+  try {
+    const createData = await readFileAsync('./sql/insert-orders.sql');
+    await query(createData.toString('utf8'));
+    console.info('Pantanir og körfur búnar til');
+  } catch (e) {
+    console.error('Villa við að búa til pantanir og körfur:', e.message);
   }
 }
 

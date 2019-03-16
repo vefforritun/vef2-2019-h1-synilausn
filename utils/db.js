@@ -1,4 +1,6 @@
 const { Client } = require('pg');
+
+const debug = require('./debug');
 const { toPositiveNumberOrDefault } = require('../utils/validation');
 
 /**
@@ -56,7 +58,11 @@ async function pagedQuery(
 async function conditionalUpdate(table, id, fields, values) {
   const filteredFields = fields.filter(i => typeof i === 'string');
   const filteredValues = values
-    .filter(i => typeof i === 'string' || typeof i === 'number');
+    .filter(
+      i => typeof i === 'string' ||
+      typeof i === 'number' ||
+      i instanceof Date,
+    );
 
   if (filteredFields.length === 0) {
     return false;
@@ -77,7 +83,11 @@ async function conditionalUpdate(table, id, fields, values) {
     RETURNING *
     `;
 
-  const result = await query(q, [id].concat(filteredValues));
+  const queryValues = [id].concat(filteredValues);
+
+  debug('Conditional update', q, queryValues);
+
+  const result = await query(q, queryValues);
 
   return result;
 }
