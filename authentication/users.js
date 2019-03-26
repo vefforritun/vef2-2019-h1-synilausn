@@ -147,7 +147,7 @@ async function findById(id) {
   return user.rows[0];
 }
 
-async function createUser(username, email, password, admin = false) {
+async function createUser(username, password, email, admin = false) {
   const hashedPassword = await bcrypt.hash(password, bcryptRounds);
 
   const q = `
