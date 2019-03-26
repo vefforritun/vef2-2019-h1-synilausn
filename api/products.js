@@ -31,7 +31,7 @@ async function getProduct(id) {
   const q = `
     SELECT
       p.id, p.title, p.price, p.description, p.image, p.created, p.category_id,
-      c.title as categoryTitle
+      c.title as category_title
     FROM
       products AS p
     LEFT JOIN
