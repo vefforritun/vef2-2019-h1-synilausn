@@ -80,10 +80,10 @@ function indexRoute(req, res) {
 router.get('/', indexRoute);
 
 router.get('/users', requireAdmin, catchErrors(listUsers));
-router.get('/users/:id', requireAdmin, catchErrors(listUser));
-router.patch('/users/:id', requireAdmin, catchErrors(updateUser));
 router.get('/users/me', requireAuth, catchErrors(currentUser));
 router.patch('/users/me', requireAuth, catchErrors(updateCurrentUser));
+router.get('/users/:id', requireAdmin, catchErrors(listUser));
+router.patch('/users/:id', requireAdmin, catchErrors(updateUser));
 
 router.get('/products', catchErrors(listProducts));
 router.post('/products', requireAdmin, catchErrors(createProduct));
