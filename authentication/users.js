@@ -88,7 +88,7 @@ async function validateUser(
     if (!isNotEmptyString(password, { min: 8 })) {
       validations.push({
         field: 'password',
-        error: lengthValidationError(3, 32),
+        error: lengthValidationError(password, 8),
       });
     }
   }
@@ -157,9 +157,10 @@ async function createUser(username, password, email, admin = false) {
       ($1, $2, $3, $4)
     RETURNING *`;
 
+  const values = [xss(username), xss(email), hashedPassword, admin];
   const result = await query(
     q,
-    [xss(username), xss(email), hashedPassword, admin],
+    values,
   );
 
   return result.rows[0];
