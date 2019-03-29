@@ -22,7 +22,10 @@ function addPageMetadata(
   const newObj = Object.assign({}, obj);
 
   const url = new URL(path, baseUrl || `http://${host}`);
-  url.port = port;
+
+  if (!baseUrl) {
+    url.port = port;
+  }
 
   newObj._links = {
     self: {
