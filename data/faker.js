@@ -50,7 +50,7 @@ function createFakeProduct(categories, images = []) {
   );
 
   const title = faker.commerce.productName();
-  const price = parseInt(faker.commerce.price(), 10);
+  const price = parseInt(faker.commerce.price(1), 10);
   const description = faker.lorem.paragraphs();
 
   const image = images.length > 0 ?
@@ -106,7 +106,14 @@ async function createFakeProducts(num, categories, images) {
       product.category,
     ];
 
-    const result = await query(q, values); // eslint-disable-line
+    let result;
+
+    try {
+      result = await query(q, values); // eslint-disable-line
+    } catch (e) {
+      console.info('Reyndi að búa til', product);
+      throw e;
+    }
 
     if (products.length > 20 && i % (products.length / 10) === 0) {
       debug(`Búið að bæta ${i} gervivörum í gagnagrunn`);
