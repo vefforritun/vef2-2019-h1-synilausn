@@ -31,12 +31,13 @@ async function updateCartLine(cartId, productId, quantity) {
   const q = `
     UPDATE
       orderLines
-    SET quantity = $3, updated = current_timestamp
+    SET quantity = quantity + $3, updated = current_timestamp
     WHERE
       order_id = $1 AND product_id = $2
     `;
+  const values = [cartId, productId, quantity];
 
-  const result = await query(q, [cartId, productId, quantity]);
+  const result = await query(q, values);
 
   return result.rowCount === 1;
 }
@@ -161,7 +162,7 @@ async function updateCartLineRoute(req, res) {
   }
 
   if (toPositiveNumberOrDefault(quantity, 0) <= 0) {
-    return res.status(401).json({
+    return res.status(400).json({
       errors: [{
         field: 'quantity',
         error: 'Quantity must be a positive integer',
