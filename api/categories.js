@@ -5,6 +5,7 @@ const {
   isInt,
   isNotEmptyString,
   lengthValidationError,
+  toPositiveNumberOrDefault,
 } = require('../utils/validation');
 const addPageMetadata = require('../utils/addPageMetadata');
 
@@ -130,6 +131,17 @@ async function deleteCategory(req, res) {
 
   if (!category) {
     return res.status(404).json({ error: 'Category not found' });
+  }
+
+  // Athuga hversu margar vörur eru í flokk
+  const countQuery = 'SELECT COUNT(*) FROM products WHERE category_id = $1';
+  const countResult = await query(countQuery, [id]);
+
+  const { count } = countResult.rows[0];
+
+  // Leyfum bara að eyða tómum flokkum
+  if (toPositiveNumberOrDefault(count, 0) > 0) {
+    return res.status(400).json({ error: 'Category is not empty' });
   }
 
   const q = 'DELETE FROM categories WHERE id = $1';
