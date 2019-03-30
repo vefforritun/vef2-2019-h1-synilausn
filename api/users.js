@@ -8,7 +8,6 @@ const { query, pagedQuery } = require('../utils/db');
 const { isBoolean } = require('../utils/validation');
 const addPageMetadata = require('../utils/addPageMetadata');
 
-
 async function listUsers(req, res) {
   const { offset = 0, limit = 10 } = req.query;
 

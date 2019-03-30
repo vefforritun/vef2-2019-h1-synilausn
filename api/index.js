@@ -7,11 +7,6 @@ const requireAdmin = [
   checkUserIsAdmin,
 ];
 
-/*
-const requireAdmin = (req, res, next) => next();
-const requireAuth = (req, res, next) => next();
- */
-
 const {
   listCategories,
   listCategory,
