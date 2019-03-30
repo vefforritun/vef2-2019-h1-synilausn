@@ -38,6 +38,7 @@ async function getOrderLines(orderId) {
       categories AS c ON c.id = p.category_id
     WHERE
       l.order_id = $1
+    ORDER BY l.created
   `;
 
   const result = await query(q, [orderId]);
